@@ -8,13 +8,6 @@
 
 #define REPORTING_PERIOD_MS 1000
 
-// PulseOximeter is the higher level interface to the sensor
-// it offers:
-//  * beat detection reporting
-//  * heart rate calculation
-//  * SpO2 (oxidation level) calculation
-uint32_t tsLastReport = 0;
-
 #define BUTTON_LEFT 0
 
 //*******Sensor de temperatura*****//
@@ -203,7 +196,7 @@ void loop()
 
     dtostrf(h, 2, 0, hString); // variable, numero de digitos, numero decimales, arreglo donde guardarlo
     // snprintf(msg, MSG_BUFFER_SIZE, "hello world #%ld", value);
-    Serial.print("SpO2: ");
+    Serial.print("Humedad: ");
     Serial.println(hString);
     client.publish("esp32/temp", hString);
     tft.setTextColor(TFT_SKYBLUE, TFT_BLACK);
@@ -211,7 +204,7 @@ void loop()
     tft.drawString(hString, 50, 90, 6);
 
     dtostrf(t, 2, 1, tString); // variable, numero de digitos, numero decimales, arreglo donde guardarlo
-    Serial.print("Ritmo: ");
+    Serial.print("Temperatura: ");
     Serial.println(tString);
     client.publish("esp32/humedad", tString);
     tft.setTextColor(TFT_RED, TFT_BLACK);
