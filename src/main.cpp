@@ -16,6 +16,19 @@
 uint32_t tsLastReport = 0;
 
 #define BUTTON_LEFT 0
+
+//*******Sensor de temperatura*****//
+#include <DHT.h>
+#include <string.h>
+
+#define DHTPIN 27     // definicion del pin al que se conecta el sensor
+#define DHTTYPE DHT11 // definir el tipo de dht
+
+//#define LED1Pin 2 // 32
+//#define LED2Pin 33
+
+DHT dht(DHTPIN, DHTTYPE); // constructor
+
 // Update these with values suitable for your network.
 
 const char *ssid = "Suarez";               // WiFi name
@@ -24,11 +37,11 @@ const char *mqtt_server = "34.201.250.63"; // Your assign IP
 
 TFT_eSPI tft = TFT_eSPI();
 
-float spO2 = 0;
-char o2String[8];
+// float spO2 = 0;
+char hString[8];
 
-float ritmo = 0;
-char ritmoString[8];
+// float ritmo = 0;
+char tString[8];
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -52,10 +65,7 @@ void isr()
   }
   toggle = !toggle;
 }
-void onBeatDetected()
-{
-  // Serial.println("Beat!");
-}
+
 void setup_wifi()
 {
 
@@ -162,24 +172,6 @@ void setup()
   tft.init();
   tft.fillScreen(TFT_BLACK);
   tft.setRotation(1);
-  /*
-    Serial.print("Initializing pulse oximeter..");
-
-    // Initialize the PulseOximeter instance
-    // Failures are generally due to an improper I2C wiring, missing power supply
-    // or wrong target chip
-    if (!pox.begin())
-    {
-      Serial.println("FAILED");
-      for (;;)
-        ;
-    }
-    else
-    {
-      Serial.println("SUCCESS");
-    }
-    pox.setOnBeatDetectedCallback(onBeatDetected);
-    */
 }
 
 void loop()
@@ -191,7 +183,17 @@ void loop()
   }
   client.loop();
 
-  // pox.update();
+  float h = dht.readHumidity();    // lee la humedad en fnc read y la almacena en h
+  float t = dht.readTemperature(); // lee la temperatura en fnc read y la almacena en t
+  /*if (isnan(h) || isnan(t))
+  {
+    //Serial.println(F("Failed to read from DHT sensor!")); // isnan nos devuelve un 1 en caso de ue exista un fallo o un error en la lectura de la vble
+
+    tft.fillScreen(TFT_BLACK);
+    tft.drawString("Failed to read from DHT sensor", 20, 50, 2); // X, Y, FONT
+
+    return;
+  }*/
 
   unsigned long now = millis();
   if (now - lastMsg > 2000)
@@ -199,25 +201,22 @@ void loop()
     lastMsg = now;
     // tft.fillScreen(TFT_BLACK);
 
-    spO2++;  //= pox.getSpO2();
-    ritmo++; //= pox.getHeartRate();
-
-    dtostrf(spO2, 2, 0, o2String); // variable, numero de digitos, numero decimales, arreglo donde guardarlo
+    dtostrf(h, 2, 0, hString); // variable, numero de digitos, numero decimales, arreglo donde guardarlo
     // snprintf(msg, MSG_BUFFER_SIZE, "hello world #%ld", value);
     Serial.print("SpO2: ");
-    Serial.println(o2String);
-    client.publish("esp32/temp", o2String);
+    Serial.println(hString);
+    client.publish("esp32/temp", hString);
     tft.setTextColor(TFT_SKYBLUE, TFT_BLACK);
-    tft.drawString("SpO2 (%):", 5, 70, 2);
-    tft.drawString(o2String, 50, 90, 6);
+    tft.drawString("Humedad (%):", 5, 70, 2);
+    tft.drawString(hString, 50, 90, 6);
 
-    dtostrf(ritmo, 2, 1, ritmoString); // variable, numero de digitos, numero decimales, arreglo donde guardarlo
+    dtostrf(t, 2, 1, tString); // variable, numero de digitos, numero decimales, arreglo donde guardarlo
     Serial.print("Ritmo: ");
-    Serial.println(ritmoString);
-    client.publish("esp32/humedad", ritmoString);
+    Serial.println(tString);
+    client.publish("esp32/humedad", tString);
     tft.setTextColor(TFT_RED, TFT_BLACK);
-    tft.drawString("Ritmo Cardíaco (bpm):", 5, 0, 2);
-    tft.drawString(ritmoString, 30, 20, 6);
+    tft.drawString("Temperatura (°C):", 5, 0, 2);
+    tft.drawString(tString, 30, 20, 6);
 
     sprintf(toggleString, "%d", toggle);
     Serial.print("Toggle: ");
